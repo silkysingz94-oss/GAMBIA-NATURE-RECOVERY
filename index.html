@@ -1,0 +1,1269 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SILKYSINGZ GEOAI | Gambia Nature Recovery Intelligence</title>
+
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7.2.0/turf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+<style>
+:root{
+ --bg:#07131c;--panel:#10232e;--panel2:#142d39;
+ --line:#294652;--text:#e9f1f4;--muted:#9bb0ba;
+ --green:#69d6a0;--blue:#55b7ed;--orange:#f0b45e;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Arial,Segoe UI,sans-serif}
+header{height:65px;background:#091923;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 17px}
+.brand{font-size:16px;font-weight:800;letter-spacing:.6px}
+.brand span{color:var(--green)}
+.sub{font-size:10px;color:var(--muted);margin-top:4px}
+.headright{text-align:right;color:var(--muted);font-size:10px;line-height:1.6}
+main{height:calc(100% - 65px);padding:9px;display:grid;grid-template-columns:minmax(265px,1fr) minmax(390px,1.15fr) minmax(275px,1fr);gap:9px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px;overflow:auto;min-height:0;scrollbar-width:thin}
+.panel h2{font-size:14px;margin:0 0 12px}
+.panel h3{font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin:16px 0 8px}
+label{display:block;color:var(--muted);font-size:10px;margin:8px 0 4px}
+select,input[type=text]{width:100%;padding:8px;background:#091a23;border:1px solid var(--line);border-radius:5px;color:white;font-size:11px}
+input[type=range]{width:100%;accent-color:var(--green)}
+button{border:0;border-radius:5px;background:var(--green);color:#062017;padding:9px 10px;font-size:10px;font-weight:700;cursor:pointer}
+button.secondary{background:#294754;color:white}
+button.danger{background:#623a3a;color:white}
+button:disabled{opacity:.5}
+.row{display:flex;gap:6px;margin-top:7px}
+.row>*{flex:1}
+.check{display:flex;gap:7px;align-items:center;color:#dbe6e9;font-size:10px;margin:9px 0}
+.check input{accent-color:var(--green)}
+.hint{font-size:10px;color:var(--muted);line-height:1.55}
+#mapWrap{position:relative;border:1px solid var(--line);border-radius:9px;overflow:hidden;min-height:0}
+#map{position:absolute;inset:0}
+.maplabel{position:absolute;top:12px;left:12px;z-index:2;background:#071820e8;border:1px solid #46616c;border-radius:6px;padding:9px;pointer-events:none}
+.maplabel b{font-size:11px;display:block}
+.maplabel small{font-size:9px;color:#b4c6cc}
+#mapstatus{position:absolute;bottom:10px;left:10px;z-index:2;background:#071820e8;padding:8px;border-radius:5px;font-size:10px;max-width:85%}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:9px}
+.kpi small{font-size:9px;color:var(--muted);display:block}
+.kpi b{font-size:17px;display:block;margin-top:5px;overflow-wrap:anywhere}
+.chart{height:185px;background:#0a1b24;border:1px solid var(--line);border-radius:6px;padding:8px;margin:8px 0}
+.urlbox{padding:8px;border:1px solid var(--line);border-radius:6px;margin:8px 0}
+.source{font-size:10px;line-height:1.7;border-bottom:1px solid #263e49;padding:7px 0}
+a{color:#76c9ed;text-decoration:none}
+a:hover{text-decoration:underline}
+.status{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #263e49;font-size:10px}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:#8b999e;margin-right:5px}
+.dot.ok{background:#65d69c}.dot.bad{background:#f17b70}.dot.loading{background:#efb35c}
+.legend{display:flex;align-items:center;gap:8px;font-size:10px;margin:7px 0}
+.swatch{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.gps{background:#0a1b24;border:1px solid var(--line);border-radius:6px;padding:9px;font-size:10px;line-height:1.7}
+footer{font-size:9px;line-height:1.6;color:#8fa4ad;border-top:1px solid var(--line);padding-top:10px;margin-top:14px}
+@media(max-width:1000px){
+ html,body{height:auto;overflow:auto}
+ header{position:sticky;top:0;z-index:5}
+ main{height:auto;grid-template-columns:1fr}
+ #mapWrap{height:65vh;min-height:450px;grid-row:1}
+ .panel{max-height:700px}
+}
+</style>
+</head>
+
+<body>
+<header>
+ <div>
+  <div class="brand">SILKYSINGZ <span>GEOAI</span> | GAMBIA NATURE RECOVERY</div>
+  <div class="sub">3D Landscape • Soil • Land Cover • Water • Vegetation • Nature Intelligence</div>
+ </div>
+ <div class="headright">GIS / CARTOGRAPHY UNIT<br>Gambia Bureau of Statistics</div>
+</header>
+
+<main>
+
+<!-- LEFT CONTROL PANEL -->
+<section class="panel">
+ <h2>Controls & thematic layers</h2>
+
+ <h3>Administrative selection</h3>
+ <label>Local Government Area</label>
+ <select id="lga"><option value="">All LGAs</option></select>
+
+ <label>District</label>
+ <select id="district"><option value="">All districts</option></select>
+
+ <label>Ward</label>
+ <select id="ward"><option value="">All wards</option></select>
+
+ <div class="row">
+  <button id="apply">Apply selection</button>
+  <button class="secondary" id="reset">Reset national view</button>
+ </div>
+
+ <h3>3D terrain and EA display</h3>
+ <label>Terrain exaggeration: <b id="exText">2.0×</b></label>
+ <input id="exaggeration" type="range" min="1" max="5" step=".25" value="2">
+
+ <label>EA extrusion variable</label>
+ <select id="heightVariable">
+  <option value="population">Population</option>
+  <option value="households">Households</option>
+  <option value="flat">Flat EA boundaries</option>
+ </select>
+
+ <label>Extrusion height</label>
+ <input id="heightScale" type="range" min=".5" max="8" step=".5" value="2">
+
+ <label class="check"><input type="checkbox" id="showEA" checked> Show EA boundaries</label>
+ <label class="check"><input type="checkbox" id="showLabels" checked> Show EA labels</label>
+
+ <h3>Nature and landscape layers</h3>
+ <div class="hint">All layers are displayed within the selected administrative area. Select an area and refresh to update the map and statistics.</div>
+
+ <label class="check"><input type="checkbox" id="soilToggle"> Soil classes — ISRIC SoilGrids WRB</label>
+ <label class="check"><input type="checkbox" id="landToggle"> Land cover — ESA WorldCover 2021</label>
+ <label class="check"><input type="checkbox" id="waterToggle" checked> Rivers, streams, wetlands and mapped water</label>
+ <label class="check"><input type="checkbox" id="treesToggle" checked> Woodland, trees and hedgerows</label>
+ <label class="check"><input type="checkbox" id="protectedToggle" checked> Protected / nature areas</label>
+ <label class="check"><input type="checkbox" id="pondsToggle" checked> Mapped ponds / historic pond tags</label>
+ <label class="check"><input type="checkbox" id="roadsToggle" checked> Major roads</label>
+
+ <div class="row">
+  <button id="refresh">Refresh selected area</button>
+  <button id="allOn" class="secondary">Show all layers</button>
+ </div>
+
+ <h3>Optional GitHub Raw GeoJSON — roads only</h3>
+ <div class="urlbox">
+  <label>Major roads GeoJSON URL</label>
+  <input type="text" id="roadsUrl" placeholder="https://raw.githubusercontent.com/user/repo/main/roads.geojson">
+  <div class="hint">If supplied, this replaces the OSM major-roads query. Features are filtered to the selected area.</div>
+  <button id="loadRoadUrl" style="width:100%;margin-top:7px">Load GitHub roads</button>
+ </div>
+
+ <h3>GPS / current location</h3>
+ <div class="gps">
+  <div id="gpsStatus">GPS inactive. Browser location permission is required.</div>
+  <div id="gpsCoords">Coordinates: —</div>
+  <div id="gpsAccuracy">Accuracy: —</div>
+  <div id="gpsUpdated">Last position: —</div>
+ </div>
+ <div class="row">
+  <button id="locate" class="secondary">Locate me</button>
+  <button id="stopGPS" class="danger">Stop GPS</button>
+ </div>
+
+ <h3>Export</h3>
+ <div class="row">
+  <button id="exportStats" class="secondary">Statistics CSV</button>
+  <button id="exportGeo" class="secondary">Thematic GeoJSON</button>
+ </div>
+ <button id="exportEA" class="secondary" style="width:100%;margin-top:7px">Export selected EAs</button>
+
+ <h3>Layer service status</h3>
+ <div id="serviceStatus"></div>
+ <div id="message" class="hint" style="margin-top:8px">Loading map…</div>
+
+ <h3>Data source links</h3>
+ <div class="source"><b>Soil classes — ISRIC SoilGrids WRB</b><br>
+  <a href="https://maps.isric.org/generated/soilgrids/wrb.html" target="_blank">WRB layer information</a><br>
+  <a href="https://maps.isric.org/mapserv/wrb" target="_blank">WRB WMS service</a><br>
+  <a href="https://docs.isric.org/globaldata/soilgrids/SoilGrids_faqs_02.html" target="_blank">Access and documentation</a>
+ </div>
+ <div class="source"><b>Land cover — ESA WorldCover 2021</b><br>
+  <a href="https://esa-worldcover.org/en/data-access" target="_blank">Official data access and services</a><br>
+  <a href="https://viewer.esa-worldcover.org/" target="_blank">WorldCover viewer</a><br>
+  <a href="https://registry.opendata.aws/esa-worldcover/" target="_blank">AWS Open Data Registry</a>
+ </div>
+ <div class="source"><b>OpenStreetMap vector layers</b><br>
+  <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap map</a><br>
+  <a href="https://overpass-turbo.eu/" target="_blank">Overpass Turbo query tool</a><br>
+  <a href="https://wiki.openstreetmap.org/" target="_blank">OSM tagging documentation</a>
+ </div>
+ <div class="source"><b>Optional road GeoJSON</b><br>
+  <a href="https://github.com/" target="_blank">GitHub repositories</a>
+ </div>
+
+ <footer>
+  Produced by Ansu Singhateh<br>
+  GIS Analyst | GIS / Cartography Unit | Gambia Bureau of Statistics<br>
+  SILKYSINGZ GEOAI • Research and educational use
+ </footer>
+</section>
+
+<!-- MAP -->
+<div id="mapWrap">
+ <div id="map"></div>
+ <div class="maplabel">
+  <b>GAMBIA 3D LANDSCAPE INTELLIGENCE</b>
+  <small id="selectedTitle">National view</small>
+ </div>
+ <div id="mapstatus">Initialising map…</div>
+</div>
+
+<!-- RIGHT ANALYTICS -->
+<section class="panel">
+ <h2>Selected-area analytics</h2>
+
+ <h3>Administrative and population statistics</h3>
+ <div class="kpis">
+  <div class="kpi"><small>Enumeration areas</small><b id="eaCount">—</b></div>
+  <div class="kpi"><small>Population</small><b id="population">—</b></div>
+  <div class="kpi"><small>Households</small><b id="households">—</b></div>
+  <div class="kpi"><small>Area (km²)</small><b id="area">—</b></div>
+  <div class="kpi"><small>Mean population / EA</small><b id="meanPop">—</b></div>
+  <div class="kpi"><small>Mean households / EA</small><b id="meanHH">—</b></div>
+ </div>
+
+ <h3>Population and household profile</h3>
+ <div class="chart"><canvas id="populationChart"></canvas></div>
+
+ <h3>OSM mapped feature counts</h3>
+ <div class="chart"><canvas id="featureChart"></canvas></div>
+
+ <h3>Mapped feature measurements</h3>
+ <div class="kpis">
+  <div class="kpi"><small>Water / stream length (km)</small><b id="waterKm">—</b></div>
+  <div class="kpi"><small>Road length (km)</small><b id="roadKm">—</b></div>
+  <div class="kpi"><small>Woodland area (ha)</small><b id="woodHa">—</b></div>
+  <div class="kpi"><small>Nature area (ha)</small><b id="natureHa">—</b></div>
+  <div class="kpi"><small>Mapped ponds</small><b id="pondCount">—</b></div>
+  <div class="kpi"><small>Total OSM features</small><b id="totalFeatures">—</b></div>
+ </div>
+
+ <h3>Mapped feature distribution</h3>
+ <div class="chart"><canvas id="distributionChart"></canvas></div>
+
+ <h3>Layer statistics</h3>
+ <div id="statsTable" class="hint">Waiting for thematic data…</div>
+
+ <h3>Dynamic legend</h3>
+ <div id="legend"></div>
+
+ <h3>Raster data statistics</h3>
+ <div class="hint">
+  SoilGrids and WorldCover are raster WMS layers. The map displays the selected area's raster coverage, but WMS image tiles do not expose the underlying pixel values for accurate zonal statistics. Pixel-level class area statistics require raster/COG processing or a suitable WCS/API. No raster class counts or areas are fabricated here.
+ </div>
+
+ <h3>Methodology and limitations</h3>
+ <div class="hint">
+  OSM data are retrieved for the selected boundary extent and checked against the selected EA geometries. Line and polygon geometries are clipped or filtered before display. OSM data may be incomplete. Mapped historic pond tags are not a verified inventory of lost ponds. Protected-area tags should be checked against official conservation datasets. Statistics describe the retrieved mapped features, not necessarily all features on the ground.
+ </div>
+
+ <div class="hint" id="updatedAt" style="margin-top:10px">Last updated: —</div>
+</section>
+</main>
+
+<script>
+"use strict";
+
+/* =====================================================
+   CONFIGURATION
+===================================================== */
+
+const EA_URL =
+"https://raw.githubusercontent.com/silkysingz94-oss/Urban-Planning-Intelligence/main/Census_EAs_Geo.json";
+
+const SOIL_WMS =
+"https://maps.isric.org/mapserv/wrb";
+
+const WORLDCOVER_WMS =
+"https://titiler.terrascope.be/ogc/wms/esa-worldcover";
+
+const $=id=>document.getElementById(id);
+const number=n=>Number(n||0).toLocaleString();
+const decimal=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2});
+
+const state={
+ all:null,
+ selected:null,
+ layers:{},
+ charts:{},
+ gpsWatch:null,
+ gpsMarker:null,
+ token:0,
+ selectedName:"The Gambia"
+};
+
+const definitions={
+ water:{label:"Water / rivers / wetlands",color:"#42a9e8",toggle:"waterToggle"},
+ trees:{label:"Woodland / trees / hedgerows",color:"#279b65",toggle:"treesToggle"},
+ protected:{label:"Protected / nature areas",color:"#b18adf",toggle:"protectedToggle"},
+ ponds:{label:"Ponds / historic pond tags",color:"#e2ce62",toggle:"pondsToggle"},
+ roads:{label:"Major roads",color:"#e5e5e5",toggle:"roadsToggle"}
+};
+
+const osmTags={
+ water:[
+  'way["waterway"~"river|stream|canal|drain|ditch"]',
+  'way["natural"~"water|wetland"]',
+  'way["waterway"="riverbank"]',
+  'node["natural"="water"]',
+  'node["waterway"~"waterfall|weir"]'
+ ],
+ trees:[
+  'way["natural"~"wood|scrub"]',
+  'way["landuse"~"forest|orchard"]',
+  'way["barrier"="hedge"]',
+  'way["natural"="tree_row"]',
+  'node["natural"="tree"]'
+ ],
+ protected:[
+  'way["boundary"~"protected_area|national_park"]',
+  'relation["boundary"~"protected_area|national_park"]',
+  'way["leisure"="nature_reserve"]',
+  'relation["leisure"="nature_reserve"]',
+  'way["protect_class"]'
+ ],
+ ponds:[
+  'way["natural"="water"]["water"~"pond|lake"]',
+  'way["historic"="pond"]',
+  'node["natural"="water"]["water"="pond"]'
+ ],
+ roads:[
+  'way["highway"~"motorway|trunk|primary|secondary"]'
+ ]
+};
+
+/* =====================================================
+   MAP AND 3D TERRAIN
+===================================================== */
+
+const map=new maplibregl.Map({
+ container:"map",
+ center:[-15.45,13.45],
+ zoom:7.1,
+ pitch:55,
+ bearing:-8,
+ style:{
+  version:8,
+  sources:{
+   imagery:{
+    type:"raster",
+    tiles:["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+    tileSize:256,
+    attribution:"Esri World Imagery"
+   },
+   labels:{
+    type:"raster",
+    tiles:["https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"],
+    tileSize:256
+   },
+   dem:{
+    type:"raster-dem",
+    tiles:["https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png"],
+    tileSize:256,
+    encoding:"terrarium",
+    maxzoom:15
+   }
+  },
+  layers:[
+   {id:"imagery",type:"raster",source:"imagery"},
+   {id:"labels",type:"raster",source:"labels"}
+  ],
+  terrain:{source:"dem",exaggeration:2}
+ }
+});
+
+map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),"top-right");
+map.addControl(new maplibregl.ScaleControl({unit:"metric"}),"bottom-right");
+
+/* =====================================================
+   GENERAL GEOMETRY FUNCTIONS
+===================================================== */
+
+function selectedBounds(){
+ return turf.bbox(state.selected);
+}
+
+function selectedPolygons(){
+ return state.selected.features.filter(f=>
+  f.geometry && ["Polygon","MultiPolygon"].includes(f.geometry.type)
+ );
+}
+
+function pointInsideSelected(point){
+ return selectedPolygons().some(poly=>{
+  try{return turf.booleanPointInPolygon(point,poly)}
+  catch(e){return false}
+ });
+}
+
+function intersectsSelected(feature){
+ return selectedPolygons().some(poly=>{
+  try{return turf.booleanIntersects(feature,poly)}
+  catch(e){return false}
+ });
+}
+
+function clipPolygon(feature){
+ const result=[];
+ selectedPolygons().forEach(poly=>{
+  try{
+   const clipped=turf.intersect(turf.featureCollection([feature,poly]));
+   if(clipped){
+    clipped.properties={...feature.properties};
+    result.push(clipped);
+   }
+  }catch(e){}
+ });
+ return result;
+}
+
+/* Split line segments at the selected boundary.
+   This is an approximate segment-level clip. */
+function clipLine(feature){
+ const result=[];
+ const lines=feature.geometry.type==="MultiLineString"
+  ? feature.geometry.coordinates
+  : [feature.geometry.coordinates];
+
+ for(const coords of lines){
+  let part=[];
+  for(let i=0;i<coords.length-1;i++){
+   const a=coords[i],b=coords[i+1];
+   const mid=turf.point([(a[0]+b[0])/2,(a[1]+b[1])/2]);
+   if(pointInsideSelected(mid)){
+    if(!part.length)part.push(a);
+    part.push(b);
+   }else{
+    if(part.length>1)
+     result.push(turf.lineString(part,{...feature.properties}));
+    part=[];
+   }
+  }
+  if(part.length>1)
+   result.push(turf.lineString(part,{...feature.properties}));
+ }
+ return result;
+}
+
+function filterToSelected(fc){
+ const output=[];
+ for(const f of fc.features||[]){
+  if(!f.geometry)continue;
+  const t=f.geometry.type;
+
+  if(t==="Point"){
+   if(pointInsideSelected(turf.point(f.geometry.coordinates)))output.push(f);
+  }else if(t==="MultiPoint"){
+   f.geometry.coordinates.forEach(c=>{
+    if(pointInsideSelected(turf.point(c)))
+     output.push(turf.point(c,{...f.properties}));
+   });
+  }else if(t==="LineString"||t==="MultiLineString"){
+   output.push(...clipLine(f));
+  }else if(t==="Polygon"||t==="MultiPolygon"){
+   output.push(...clipPolygon(f));
+  }else if(intersectsSelected(f)){
+   output.push(f);
+  }
+ }
+ return {type:"FeatureCollection",features:output};
+}
+
+function areaHa(fc){
+ let a=0;
+ (fc.features||[]).forEach(f=>{
+  if(["Polygon","MultiPolygon"].includes(f.geometry?.type)){
+   try{a+=turf.area(f)/10000}catch(e){}
+  }
+ });
+ return a;
+}
+
+function lengthKm(fc){
+ let l=0;
+ (fc.features||[]).forEach(f=>{
+  if(["LineString","MultiLineString"].includes(f.geometry?.type)){
+   try{l+=turf.length(f,{units:"kilometers"})}catch(e){}
+  }
+ });
+ return l;
+}
+
+/* =====================================================
+   ADMINISTRATIVE SELECTORS
+===================================================== */
+
+function getProp(p,keys){
+ for(const k of keys){
+  if(p[k]!==undefined&&p[k]!==null&&p[k]!=="")return String(p[k]);
+ }
+ return "";
+}
+
+function getNumber(p,keys){
+ for(const k of keys){
+  if(p[k]!==undefined&&p[k]!==null&&Number.isFinite(Number(p[k])))
+   return Number(p[k]);
+ }
+ return 0;
+}
+
+function uniqueValues(features,keys){
+ return [...new Set(features.map(f=>getProp(f.properties,keys)).filter(Boolean))]
+  .sort((a,b)=>a.localeCompare(b));
+}
+
+function fillSelect(id,values,first){
+ const el=$(id),previous=el.value;
+ el.innerHTML=`<option value="">${first}</option>`+
+  values.map(v=>`<option value="${v.replace(/"/g,"&quot;")}">${v}</option>`).join("");
+ if(values.includes(previous))el.value=previous;
+}
+
+function populateLGA(){
+ fillSelect("lga",uniqueValues(state.all.features,["lganame","LGA","lga"]),"All LGAs");
+ updateDistricts();
+}
+
+function updateDistricts(){
+ const l=$("lga").value;
+ const fs=state.all.features.filter(f=>
+  !l||getProp(f.properties,["lganame","LGA","lga"])===l
+ );
+ fillSelect("district",uniqueValues(fs,["distname","district","DISTRICT"]),"All districts");
+ updateWards();
+}
+
+function updateWards(){
+ const l=$("lga").value,d=$("district").value;
+ const fs=state.all.features.filter(f=>{
+  const p=f.properties;
+  return (!l||getProp(p,["lganame","LGA","lga"])===l)&&
+   (!d||getProp(p,["distname","district","DISTRICT"])===d);
+ });
+ fillSelect("ward",uniqueValues(fs,["wardname","ward","WARD"]),"All wards");
+}
+
+function selectArea(){
+ const l=$("lga").value,d=$("district").value,w=$("ward").value;
+
+ const features=state.all.features.filter(f=>{
+  const p=f.properties;
+  return (!l||getProp(p,["lganame","LGA","lga"])===l)&&
+   (!d||getProp(p,["distname","district","DISTRICT"])===d)&&
+   (!w||getProp(p,["wardname","ward","WARD"])===w);
+ });
+
+ if(!features.length){
+  message("No enumeration areas found for that selection.");
+  return;
+ }
+
+ state.selected={type:"FeatureCollection",features};
+ state.selectedName=[w,d,l].filter(Boolean).join(" / ")||"The Gambia";
+
+ updateSelectionDisplay();
+ const b=turf.bbox(state.selected);
+ map.fitBounds([[b[0],b[1]],[b[2],b[3]]],{padding:45,maxZoom:14,duration:900});
+
+ drawEAs();
+ updateEAStats();
+ refreshLayers();
+}
+
+function resetArea(){
+ $("lga").value="";
+ updateDistricts();
+ $("district").value="";
+ updateWards();
+ $("ward").value="";
+
+ state.selected=state.all;
+ state.selectedName="The Gambia";
+
+ updateSelectionDisplay();
+ const b=turf.bbox(state.all);
+ map.fitBounds([[b[0],b[1]],[b[2],b[3]]],{padding:45,maxZoom:8,duration:900});
+
+ drawEAs();
+ updateEAStats();
+ refreshLayers();
+}
+
+function updateSelectionDisplay(){
+ $("selectedTitle").textContent=state.selectedName;
+ $("mapstatus").textContent=
+  `${state.selectedName} | ${number(state.selected.features.length)} EAs`;
+}
+
+/* =====================================================
+   EA MAP LAYERS
+===================================================== */
+
+function heightExpression(){
+ const mode=$("heightVariable").value;
+ const scale=Number($("heightScale").value);
+ if(mode==="flat")return 0;
+
+ const keys=mode==="households"
+  ?["sum_hhs","enum_hhs","HH","households"]
+  :["sum_pop","enum_pop","POP","population"];
+
+ const values=keys.map(k=>["get",k]);
+ return ["*",["min",10000,["coalesce",...values,0]],scale*.08];
+}
+
+function drawEAs(){
+ if(map.getSource("ea")){
+  ["ea-label","ea-line","ea-extrusion"].forEach(id=>{
+   if(map.getLayer(id))map.removeLayer(id);
+  });
+  map.removeSource("ea");
+ }
+
+ map.addSource("ea",{type:"geojson",data:state.selected});
+
+ map.addLayer({
+  id:"ea-extrusion",type:"fill-extrusion",source:"ea",
+  paint:{
+   "fill-extrusion-color":[
+    "interpolate",["linear"],["coalesce",["get","sum_pop"],["get","enum_pop"],0],
+    0,"#204d75",500,"#267d92",1500,"#4db889",4000,"#e3b65a",10000,"#d45c47"
+   ],
+   "fill-extrusion-height":heightExpression(),
+   "fill-extrusion-opacity":.83
+  }
+ });
+
+ map.addLayer({
+  id:"ea-line",type:"line",source:"ea",
+  paint:{"line-color":"#c6f1dd","line-width":.7}
+ });
+
+ map.addLayer({
+  id:"ea-label",type:"symbol",source:"ea",minzoom:10,
+  layout:{
+   "text-field":["coalesce",["get","eaname"],["get","feacode"],["get","FEACODE"],"EA"],
+   "text-size":10,"text-allow-overlap":false
+  },
+  paint:{"text-color":"white","text-halo-color":"#15262d","text-halo-width":1.3}
+ });
+
+ updateEALayerVisibility();
+}
+
+function updateEALayerVisibility(){
+ const visible=$("showEA").checked?"visible":"none";
+ ["ea-extrusion","ea-line"].forEach(id=>{
+  if(map.getLayer(id))map.setLayoutProperty(id,"visibility",visible);
+ });
+ if(map.getLayer("ea-label"))
+  map.setLayoutProperty("ea-label","visibility",
+   visible==="visible"&&$("showLabels").checked?"visible":"none");
+}
+
+/* =====================================================
+   EA ANALYTICS
+===================================================== */
+
+function chart(id,type,labels,datasets){
+ if(state.charts[id])state.charts[id].destroy();
+ state.charts[id]=new Chart($(id),{
+  type,
+  data:{labels,datasets},
+  options:{
+   responsive:true,maintainAspectRatio:false,
+   plugins:{legend:{labels:{color:"#dce8eb",font:{size:9}}}},
+   scales:type==="doughnut"?{}:{
+    x:{ticks:{color:"#c2d1d6",font:{size:9}},grid:{color:"#29414b"}},
+    y:{beginAtZero:true,ticks:{color:"#c2d1d6",font:{size:9}},grid:{color:"#29414b"}}
+   }
+  }
+ });
+}
+
+function updateEAStats(){
+ const fs=state.selected.features;
+ const pop=fs.reduce((s,f)=>s+getNumber(f.properties,["sum_pop","enum_pop","POP","population"]),0);
+ const hh=fs.reduce((s,f)=>s+getNumber(f.properties,["sum_hhs","enum_hhs","HH","households"]),0);
+ const area=fs.reduce((s,f)=>s+turf.area(f)/1e6,0);
+
+ $("eaCount").textContent=number(fs.length);
+ $("population").textContent=number(pop);
+ $("households").textContent=number(hh);
+ $("area").textContent=decimal(area);
+ $("meanPop").textContent=number(fs.length?pop/fs.length:0);
+ $("meanHH").textContent=number(fs.length?hh/fs.length:0);
+
+ chart("populationChart","bar",["Population","Households"],[{
+  label:state.selectedName,
+  data:[pop,hh],
+  backgroundColor:["#55b8e9","#e7b55f"]
+ }]);
+}
+
+/* =====================================================
+   RASTER WMS
+===================================================== */
+
+function addRasterLayers(){
+ if(!map.getSource("soil")){
+  map.addSource("soil",{
+   type:"raster",
+   tiles:[
+    SOIL_WMS+"?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=MostProbable&STYLES=&FORMAT=image/png&TRANSPARENT=true&SRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256"
+   ],
+   tileSize:256,
+   attribution:"ISRIC SoilGrids WRB"
+  });
+  map.addLayer({
+   id:"soil-layer",type:"raster",source:"soil",
+   paint:{"raster-opacity":.8},layout:{visibility:"none"}
+  });
+ }
+
+ if(!map.getSource("landcover")){
+  map.addSource("landcover",{
+   type:"raster",
+   tiles:[
+    WORLDCOVER_WMS+"?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=WORLDCOVER_2021_MAP&STYLES=&FORMAT=image/png&TRANSPARENT=true&SRS=EPSG:3857&BBOX={bbox-epsg-3857}&WIDTH=256&HEIGHT=256"
+   ],
+   tileSize:256,
+   attribution:"ESA WorldCover 2021"
+  });
+  map.addLayer({
+   id:"landcover-layer",type:"raster",source:"landcover",
+   paint:{"raster-opacity":.8},layout:{visibility:"none"}
+  });
+ }
+}
+
+function updateRasterVisibility(){
+ if(map.getLayer("soil-layer"))
+  map.setLayoutProperty("soil-layer","visibility",$("soilToggle").checked?"visible":"none");
+ if(map.getLayer("landcover-layer"))
+  map.setLayoutProperty("landcover-layer","visibility",$("landToggle").checked?"visible":"none");
+}
+
+/* =====================================================
+   OVERPASS API
+===================================================== */
+
+function overpassQuery(theme){
+ const b=selectedBounds();
+ const bbox=`(${b[1]},${b[0]},${b[3]},${b[2]})`;
+ const clauses=osmTags[theme].map(tag=>tag+bbox);
+ return `[out:json][timeout:120];(${clauses.join(";")};);out geom;`;
+}
+
+const endpoints=[
+ "https://overpass-api.de/api/interpreter",
+ "https://overpass.kumi.systems/api/interpreter"
+];
+
+async function requestOSM(theme){
+ let lastError;
+ for(const endpoint of endpoints){
+  try{
+   const response=await fetch(endpoint,{
+    method:"POST",
+    headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},
+    body:"data="+encodeURIComponent(overpassQuery(theme))
+   });
+   if(!response.ok)throw new Error("Overpass HTTP "+response.status);
+   return await response.json();
+  }catch(e){lastError=e}
+ }
+ throw lastError||new Error("Overpass service unavailable");
+}
+
+function osmGeoJSON(json){
+ const features=[];
+ for(const el of json.elements||[]){
+  const tags=el.tags||{};
+
+  if(el.type==="node"&&Number.isFinite(el.lon)&&Number.isFinite(el.lat)){
+   features.push({
+    type:"Feature",properties:{...tags,osm_id:el.id},
+    geometry:{type:"Point",coordinates:[el.lon,el.lat]}
+   });
+  }
+
+  if(el.type==="way"&&el.geometry?.length>1){
+   const coords=el.geometry.map(p=>[p.lon,p.lat]);
+   const closed=coords.length>3&&
+    coords[0][0]===coords.at(-1)[0]&&coords[0][1]===coords.at(-1)[1];
+
+   const polygon=closed&&(
+    tags.natural||tags.landuse||tags.leisure||tags.boundary||
+    tags.water||tags.waterway==="riverbank"
+   );
+
+   features.push({
+    type:"Feature",
+    properties:{...tags,osm_id:el.id},
+    geometry:polygon
+     ?{type:"Polygon",coordinates:[coords]}
+     :{type:"LineString",coordinates:coords}
+   });
+  }
+ }
+ return {type:"FeatureCollection",features};
+}
+
+/* =====================================================
+   OPTIONAL GITHUB ROADS
+===================================================== */
+
+async function loadGithubRoads(){
+ const url=$("roadsUrl").value.trim();
+ if(!url)return null;
+ if(!url.startsWith("https://raw.githubusercontent.com/"))
+  throw new Error("Road URL must start with https://raw.githubusercontent.com/");
+
+ const response=await fetch(url,{cache:"no-store"});
+ if(!response.ok)throw new Error("GitHub request failed: HTTP "+response.status);
+
+ const data=await response.json();
+ const fc=data.type==="FeatureCollection"
+  ?data
+  :data.type==="Feature"
+   ?{type:"FeatureCollection",features:[data]}
+   :null;
+
+ if(!fc)throw new Error("The supplied GitHub URL did not return valid GeoJSON.");
+ return filterToSelected(fc);
+}
+
+/* =====================================================
+   VECTOR MAP LAYERS
+===================================================== */
+
+function addVector(key,fc){
+ const def=definitions[key];
+ const source="src-"+key;
+ const ids=[source+"-fill",source+"-line",source+"-point"];
+
+ ids.forEach(id=>{if(map.getLayer(id))map.removeLayer(id)});
+ if(map.getSource(source))map.removeSource(source);
+
+ map.addSource(source,{type:"geojson",data:fc});
+
+ map.addLayer({
+  id:ids[0],type:"fill",source,
+  filter:["==",["geometry-type"],"Polygon"],
+  paint:{"fill-color":def.color,"fill-opacity":.38,"fill-outline-color":def.color}
+ });
+
+ map.addLayer({
+  id:ids[1],type:"line",source,
+  filter:["in",["geometry-type"],["literal",["LineString","MultiLineString"]]],
+  paint:{
+   "line-color":def.color,
+   "line-width":key==="roads"?3:2,
+   "line-opacity":.95
+  }
+ });
+
+ map.addLayer({
+  id:ids[2],type:"circle",source,
+  filter:["==",["geometry-type"],"Point"],
+  paint:{
+   "circle-radius":4,"circle-color":def.color,
+   "circle-stroke-color":"white","circle-stroke-width":.6
+  }
+ });
+
+ updateVectorVisibility(key);
+}
+
+function updateVectorVisibility(key){
+ const source="src-"+key;
+ const visible=$(definitions[key].toggle).checked?"visible":"none";
+ [source+"-fill",source+"-line",source+"-point"].forEach(id=>{
+  if(map.getLayer(id))map.setLayoutProperty(id,"visibility",visible);
+ });
+ updateLegend();
+}
+
+/* =====================================================
+   STATUS AND LAYER REFRESH
+===================================================== */
+
+function buildStatuses(){
+ $("serviceStatus").innerHTML=Object.entries(definitions).map(([key,d])=>
+  `<div class="status" id="status-${key}">
+   <span>${d.label}</span><span><i class="dot"></i>Waiting</span>
+  </div>`
+ ).join("")+
+ `<div class="status" id="status-soil"><span>SoilGrids WRB</span><span><i class="dot"></i>Waiting</span></div>
+ <div class="status" id="status-land"><span>ESA WorldCover</span><span><i class="dot"></i>Waiting</span></div>`;
+}
+
+function setStatus(key,status,message){
+ const row=$("status-"+key);
+ if(!row)return;
+ const label=row.querySelector("span:first-child").textContent;
+ const cls=status==="ok"?"ok":status==="bad"?"bad":status==="loading"?"loading":"";
+ row.innerHTML=`<span>${label}</span><span><i class="dot ${cls}"></i>${message}</span>`;
+}
+
+function message(text){
+ $("message").textContent=text;
+ $("mapstatus").textContent=text;
+}
+
+async function loadTheme(key,token){
+ setStatus(key,"loading","Loading…");
+ try{
+  let fc;
+  if(key==="roads"&&$("roadsUrl").value.trim()){
+   fc=await loadGithubRoads();
+  }else{
+   const raw=await requestOSM(key);
+   if(token!==state.token)return;
+   fc=filterToSelected(osmGeoJSON(raw));
+  }
+
+  if(token!==state.token)return;
+  state.layers[key]=fc;
+  addVector(key,fc);
+  setStatus(key,"ok",number(fc.features.length)+" features");
+ }catch(e){
+  console.error(key,e);
+  setStatus(key,"bad",e.message);
+  state.layers[key]={type:"FeatureCollection",features:[]};
+ }
+}
+
+async function refreshLayers(){
+ if(!state.selected||!map.isStyleLoaded())return;
+
+ const token=++state.token;
+ message("Refreshing thematic data for "+state.selectedName+"…");
+
+ addRasterLayers();
+ updateRasterVisibility();
+
+ setStatus("soil","ok","WMS viewport layer");
+ setStatus("land","ok","WMS viewport layer");
+
+ await Promise.all(
+  Object.keys(definitions).map(key=>loadTheme(key,token))
+ );
+
+ if(token!==state.token)return;
+
+ updateThematicStats();
+ updateLegend();
+
+ const time=new Date().toLocaleString();
+ $("updatedAt").textContent="Last updated: "+time;
+ message("Thematic layer refresh completed for "+state.selectedName+".");
+}
+
+/* =====================================================
+   THEMATIC STATISTICS AND CHARTS
+===================================================== */
+
+function fc(key){
+ return state.layers[key]||{type:"FeatureCollection",features:[]};
+}
+
+function updateThematicStats(){
+ const water=fc("water");
+ const trees=fc("trees");
+ const nature=fc("protected");
+ const ponds=fc("ponds");
+ const roads=fc("roads");
+
+ const wkm=lengthKm(water);
+ const rkm=lengthKm(roads);
+ const tha=areaHa(trees);
+ const nha=areaHa(nature);
+
+ const values=[
+  water.features.length,
+  trees.features.length,
+  nature.features.length,
+  ponds.features.length,
+  roads.features.length
+ ];
+
+ const total=values.reduce((a,b)=>a+b,0);
+
+ $("waterKm").textContent=decimal(wkm);
+ $("roadKm").textContent=decimal(rkm);
+ $("woodHa").textContent=decimal(tha);
+ $("natureHa").textContent=decimal(nha);
+ $("pondCount").textContent=number(ponds.features.length);
+ $("totalFeatures").textContent=number(total);
+
+ const labels=["Water","Woodland","Protected","Ponds","Roads"];
+ const colors=[
+  definitions.water.color,definitions.trees.color,
+  definitions.protected.color,definitions.ponds.color,
+  definitions.roads.color
+ ];
+
+ chart("featureChart","bar",labels,[{
+  label:"Features",
+  data:values,
+  backgroundColor:colors
+ }]);
+
+ chart("distributionChart","doughnut",labels,[{
+  label:"Feature distribution",
+  data:values,
+  backgroundColor:colors
+ }]);
+
+ $("statsTable").innerHTML=`
+  <div class="status"><span>Water / rivers / wetlands</span><b>${number(values[0])}</b></div>
+  <div class="status"><span>Woodland / trees / hedgerows</span><b>${number(values[1])}</b></div>
+  <div class="status"><span>Protected / nature areas</span><b>${number(values[2])}</b></div>
+  <div class="status"><span>Mapped ponds</span><b>${number(values[3])}</b></div>
+  <div class="status"><span>Major roads</span><b>${number(values[4])}</b></div>
+  <div class="status"><span>Water line length</span><b>${decimal(wkm)} km</b></div>
+  <div class="status"><span>Road line length</span><b>${decimal(rkm)} km</b></div>
+  <div class="status"><span>Woodland polygon area</span><b>${decimal(tha)} ha</b></div>
+  <div class="status"><span>Nature polygon area</span><b>${decimal(nha)} ha</b></div>
+  <p>These are measurements of the retrieved and selected-area-filtered vector data.</p>
+ `;
+}
+
+/* =====================================================
+   DYNAMIC LEGEND
+===================================================== */
+
+function updateLegend(){
+ let html="";
+
+ if($("showEA").checked)
+  html+=`<div class="legend"><i class="swatch" style="background:#52c7a0"></i>Enumeration Area boundaries</div>`;
+
+ const raster=[
+  ["soilToggle","#d8b66b","ISRIC SoilGrids WRB"],
+  ["landToggle","#79a95b","ESA WorldCover 2021"]
+ ];
+
+ raster.forEach(([id,color,label])=>{
+  if($(id).checked)
+   html+=`<div class="legend"><i class="swatch" style="background:${color}"></i>${label}</div>`;
+ });
+
+ Object.entries(definitions).forEach(([key,d])=>{
+  if($(d.toggle).checked)
+   html+=`<div class="legend"><i class="swatch" style="background:${d.color}"></i>${d.label}</div>`;
+ });
+
+ $("legend").innerHTML=html||'<div class="hint">No layers currently visible.</div>';
+}
+
+/* =====================================================
+   GPS
+===================================================== */
+
+function stopGPS(){
+ if(state.gpsWatch!==null){
+  navigator.geolocation.clearWatch(state.gpsWatch);
+  state.gpsWatch=null;
+ }
+ $("gpsStatus").textContent="GPS tracking stopped.";
+}
+
+function gpsSuccess(pos){
+ const lat=pos.coords.latitude,lon=pos.coords.longitude;
+ $("gpsStatus").textContent="GPS location received.";
+ $("gpsCoords").textContent=`Coordinates: ${lat.toFixed(6)}, ${lon.toFixed(6)}`;
+ $("gpsAccuracy").textContent=`Accuracy: ±${decimal(pos.coords.accuracy)} metres`;
+ $("gpsUpdated").textContent="Last position: "+new Date(pos.timestamp).toLocaleString();
+
+ if(!state.gpsMarker){
+  state.gpsMarker=new maplibregl.Marker({color:"#ef5148"})
+   .setLngLat([lon,lat]).addTo(map);
+ }else{
+  state.gpsMarker.setLngLat([lon,lat]);
+ }
+ map.flyTo({center:[lon,lat],zoom:14,pitch:55});
+}
+
+function gpsError(e){
+ $("gpsStatus").textContent=
+  e.code===1?"Location permission denied.":
+  e.code===2?"Location unavailable.":
+  e.code===3?"GPS timed out.":e.message;
+}
+
+function startGPS(){
+ if(!navigator.geolocation){
+  $("gpsStatus").textContent="Geolocation is not supported.";
+  return;
+ }
+ navigator.geolocation.getCurrentPosition(gpsSuccess,gpsError,{
+  enableHighAccuracy:true,timeout:20000,maximumAge:0
+ });
+ if(state.gpsWatch!==null)navigator.geolocation.clearWatch(state.gpsWatch);
+ state.gpsWatch=navigator.geolocation.watchPosition(gpsSuccess,gpsError,{
+  enableHighAccuracy:true,timeout:20000,maximumAge:5000
+ });
+}
+
+/* =====================================================
+   EXPORTS
+===================================================== */
+
+function download(name,data,type){
+ const blob=new Blob([data],{type});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download=name;a.click();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function exportStatistics(){
+ const rows=[["Indicator","Value","Unit"]];
+ rows.push(["Selected area",state.selectedName,""]);
+ rows.push(["Enumeration areas",state.selected.features.length,"EA"]);
+ rows.push(["Population",document.getElementById("population").textContent,"persons"]);
+ rows.push(["Households",document.getElementById("households").textContent,"households"]);
+ rows.push(["Area",document.getElementById("area").textContent,"km2"]);
+
+ ["water","trees","protected","ponds","roads"].forEach(k=>{
+  rows.push([definitions[k].label,fc(k).features.length,"features"]);
+ });
+
+ rows.push(["Water length",lengthKm(fc("water")),"km"]);
+ rows.push(["Road length",lengthKm(fc("roads")),"km"]);
+ rows.push(["Woodland polygon area",areaHa(fc("trees")),"ha"]);
+ rows.push(["Nature polygon area",areaHa(fc("protected")),"ha"]);
+
+ const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
+ download("Gambia_Selected_Area_Statistics.csv",csv,"text/csv");
+}
+
+function exportThematicGeoJSON(){
+ const features=[];
+ Object.entries(state.layers).forEach(([key,data])=>{
+  (data.features||[]).forEach(f=>{
+   features.push({...f,properties:{...f.properties,_theme:key}});
+  });
+ });
+ download("Gambia_Selected_Area_Thematic_Data.geojson",
+  JSON.stringify({type:"FeatureCollection",features}),
+  "application/geo+json");
+}
+
+function exportSelectedEA(){
+ download("Gambia_Selected_Area_EAs.geojson",
+  JSON.stringify(state.selected),"application/geo+json");
+}
+
+/* =====================================================
+   EVENT HANDLERS
+===================================================== */
+
+$("lga").addEventListener("change",()=>{
+ updateDistricts();
+ $("district").value="";
+ updateWards();
+ $("ward").value="";
+});
+
+$("district").addEventListener("change",()=>{
+ updateWards();
+ $("ward").value="";
+});
+
+$("apply").addEventListener("click",selectArea);
+$("reset").addEventListener("click",resetArea);
+$("refresh").addEventListener("click",refreshLayers);
+$("loadRoadUrl").addEventListener("click",refreshLayers);
+
+$("exaggeration").addEventListener("input",e=>{
+ $("exText").textContent=Number(e.target.value).toFixed(2)+"×";
+ map.setTerrain({source:"dem",exaggeration:Number(e.target.value)});
+});
+
+$("heightVariable").addEventListener("change",()=>{
+ if(map.getLayer("ea-extrusion"))
+  map.setPaintProperty("ea-extrusion","fill-extrusion-height",heightExpression());
+});
+
+$("heightScale").addEventListener("input",()=>{
+ if(map.getLayer("ea-extrusion"))
+  map.setPaintProperty("ea-extrusion","fill-extrusion-height",heightExpression());
+});
+
+$("showEA").addEventListener("change",updateEALayerVisibility);
+$("showLabels").addEventListener("change",updateEALayerVisibility);
+
+Object.entries(definitions).forEach(([key,d])=>{
+ $(d.toggle).addEventListener("change",()=>updateVectorVisibility(key));
+});
+
+["soilToggle","landToggle"].forEach(id=>{
+ $(id).addEventListener("change",()=>{
+  updateRasterVisibility();
+  updateLegend();
+ });
+});
+
+$("allOn").addEventListener("click",()=>{
+ ["soilToggle","landToggle","waterToggle","treesToggle","protectedToggle","pondsToggle","roadsToggle"]
+  .forEach(id=>$(id).checked=true);
+ updateRasterVisibility();
+ Object.keys(definitions).forEach(updateVectorVisibility);
+ updateLegend();
+});
+
+$("locate").addEventListener("click",startGPS);
+$("stopGPS").addEventListener("click",stopGPS);
+$("exportStats").addEventListener("click",exportStatistics);
+$("exportGeo").addEventListener("click",exportThematicGeoJSON);
+$("exportEA").addEventListener("click",exportSelectedEA);
+
+/* =====================================================
+   INITIALISE
+===================================================== */
+
+buildStatuses();
+
+map.on("load",async()=>{
+ try{
+  message("Loading Gambia Enumeration Area data…");
+
+  const response=await fetch(EA_URL);
+  if(!response.ok)throw new Error("EA GeoJSON HTTP "+response.status);
+
+  const raw=await response.json();
+  state.all=raw.type==="FeatureCollection"
+   ?raw:{type:"FeatureCollection",features:raw.features||[]};
+
+  if(!state.all.features.length)throw new Error("No EA features found.");
+
+  state.selected=state.all;
+  state.selectedName="The Gambia";
+
+  populateLGA();
+  drawEAs();
+  addRasterLayers();
+  updateEAStats();
+  updateLegend();
+  updateSelectionDisplay();
+
+  const b=turf.bbox(state.all);
+  map.fitBounds([[b[0],b[1]],[b[2],b[3]]],{
+   padding:45,maxZoom:8,duration:700
+  });
+
+  message("EA data loaded. Loading selected-area thematic layers…");
+  await refreshLayers();
+
+ }catch(e){
+  console.error(e);
+  message("Initialisation failed: "+e.message);
+ }
+});
+
+map.on("error",e=>{
+ if(e.error)console.warn("Map resource warning:",e.error.message);
+});
+</script>
+</body>
+</html>
